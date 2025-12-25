@@ -3,7 +3,7 @@ title: Work with Git
 pcx_content_type: how-to
 sidebar:
   order: 6
-description: Clone repositories, manage branches, and automate Git operations.
+description: Clone repositories, manage branches, automate Git operations, and use advanced commands like stash, cherry-pick, revert, and reset.
 ---
 
 import { TypeScriptExample } from "~/components";
@@ -100,6 +100,161 @@ await sandbox.exec('cd repo && git add README.md');
 await sandbox.exec('cd repo && git commit -m "Update README"');
 ```
 </TypeScriptExample>
+
+## Advanced Git commands
+
+The following advanced Git commands help you manage complex workflows, undo changes, and handle special situations.
+
+### Use git stash
+
+Temporarily save uncommitted changes without committing them. Useful when you need to switch branches but aren't ready to commit.
+
+<TypeScriptExample>
+```
+await sandbox.gitCheckout('https://github.com/user/repo');
+
+// Make some changes to files
+await sandbox.writeFile('/workspace/repo/config.js', 'const debug = true;');
+
+// Stash changes
+await sandbox.exec('cd repo && git stash');
+
+// List all stashes
+await sandbox.exec('cd repo && git stash list');
+
+// Apply most recent stash (keeps it in stash list)
+await sandbox.exec('cd repo && git stash apply');
+
+// Apply and remove most recent stash
+await sandbox.exec('cd repo && git stash pop');
+
+// Apply a specific stash
+await sandbox.exec('cd repo && git stash apply stash@{1}');
+
+// Delete a specific stash
+await sandbox.exec('cd repo && git stash drop stash@{0}');
+
+// Clear all stashes
+await sandbox.exec('cd repo && git stash clear');
+```
+</TypeScriptExample>
+
+**Common use cases:**
+- Switch branches without losing uncommitted work
+- Pull latest changes without conflicts
+- Temporarily set aside incomplete features
+
+### Use git cherry-pick
+
+Apply specific commits from one branch to another. Useful for selectively moving changes without merging entire branches.
+
+<TypeScriptExample>
+```
+await sandbox.gitCheckout('https://github.com/user/repo');
+
+// Cherry-pick a single commit
+await sandbox.exec('cd repo && git cherry-pick abc123');
+
+// Cherry-pick multiple commits
+await sandbox.exec('cd repo && git cherry-pick abc123 def456');
+
+// Cherry-pick a range of commits
+await sandbox.exec('cd repo && git cherry-pick abc123..def456');
+
+// Cherry-pick without committing (stage changes only)
+await sandbox.exec('cd repo && git cherry-pick -n abc123');
+
+// Continue after resolving conflicts
+await sandbox.exec('cd repo && git cherry-pick --continue');
+
+// Abort cherry-pick operation
+await sandbox.exec('cd repo && git cherry-pick --abort');
+```
+</TypeScriptExample>
+
+**Common use cases:**
+- Apply bug fixes from one branch to another
+- Backport features to release branches
+- Selectively merge specific changes
+
+### Use git revert
+
+Create a new commit that undoes changes from previous commits. Safe for shared branches because it preserves history.
+
+<TypeScriptExample>
+```
+await sandbox.gitCheckout('https://github.com/user/repo');
+
+// Revert the most recent commit
+await sandbox.exec('cd repo && git revert HEAD');
+
+// Revert a specific commit
+await sandbox.exec('cd repo && git revert abc123');
+
+// Revert multiple commits
+await sandbox.exec('cd repo && git revert abc123 def456');
+
+// Revert without creating a commit immediately
+await sandbox.exec('cd repo && git revert -n HEAD');
+
+// Revert a merge commit (specify parent)
+await sandbox.exec('cd repo && git revert -m 1 abc123');
+
+// Continue after resolving conflicts
+await sandbox.exec('cd repo && git revert --continue');
+
+// Abort revert operation
+await sandbox.exec('cd repo && git revert --abort');
+```
+</TypeScriptExample>
+
+**Common use cases:**
+- Undo changes on shared branches
+- Roll back problematic commits in production
+- Maintain clean history while fixing mistakes
+
+### Use git reset
+
+Move the current branch pointer and optionally modify the staging area and working directory. Use with caution on shared branches.
+
+<TypeScriptExample>
+```
+await sandbox.gitCheckout('https://github.com/user/repo');
+
+// Soft reset - keeps changes in staging area
+await sandbox.exec('cd repo && git reset --soft HEAD~1');
+
+// Mixed reset (default) - keeps changes in working directory
+await sandbox.exec('cd repo && git reset HEAD~1');
+await sandbox.exec('cd repo && git reset --mixed HEAD~1');
+
+// Hard reset - discards all changes (WARNING: destructive)
+await sandbox.exec('cd repo && git reset --hard HEAD~1');
+
+// Reset to a specific commit
+await sandbox.exec('cd repo && git reset --soft abc123');
+
+// Reset specific file from staging area
+await sandbox.exec('cd repo && git reset HEAD config.js');
+
+// Reset to remote branch state
+await sandbox.exec('cd repo && git reset --hard origin/main');
+```
+</TypeScriptExample>
+
+**Reset modes explained:**
+- `--soft`: Moves HEAD, keeps staged changes and working directory changes
+- `--mixed` (default): Moves HEAD, unstages changes, keeps working directory changes
+- `--hard`: Moves HEAD, discards staged and working directory changes
+
+**Common use cases:**
+- Undo local commits before pushing
+- Unstage files accidentally added
+- Discard all local changes and sync with remote
+
+:::caution[Use with caution]
+The `git reset --hard` command permanently deletes uncommitted changes. Use `git stash` if you might need the changes later. Avoid using reset on commits that have been pushed to shared branches.
+:::
 
 ## Best practices
 
